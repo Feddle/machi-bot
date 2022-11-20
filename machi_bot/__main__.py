@@ -1,6 +1,6 @@
 """Main file for executing the bot"""
 
-import twitter_bot_py
+import machi_bot
 
 if __name__ == "__main__":
-    twitter_bot_py.post_tweet()
+    machi_bot.post_tweet()
