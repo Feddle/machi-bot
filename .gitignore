@@ -131,3 +131,6 @@ dmypy.json
 # Secret files
 token_v1.json
 token_v2.json
+
+# Other folders
+media/
