@@ -3,4 +3,4 @@
 import machi_bot
 
 if __name__ == "__main__":
-    machi_bot.post_tweet()
+    machi_bot.main()
