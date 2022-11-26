@@ -128,5 +128,6 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
-# Secret file
-token.json
+# Secret files
+token_v1.json
+token_v2.json

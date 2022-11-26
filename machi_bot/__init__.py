@@ -13,7 +13,7 @@ def post_tweet():
 
     request_body = {}
 
-    access_token = oauth.handle_oauth()
+    access_token = oauth.handle_oauth2()
 
     headers = {
         "Authorization": f"Bearer {access_token}",
