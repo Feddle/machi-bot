@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """Main file for executing the bot"""
 
 import machi_bot
