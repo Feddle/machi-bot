@@ -137,3 +137,6 @@ token_v2.json
 
 # Other folders
 media/
+
+# Config
+config.json
