@@ -83,16 +83,16 @@ class MediaTweet:
                 )
 
                 if req.status_code < 200 or req.status_code > 299:
-                    print(req.status_code)
-                    print(req.text)
-                    sys.exit(0)
+                    logger.error("Twitter returned an error while uploading")
+                    logger.error(f"Status: {req.status_code}, message: {req.text}")
+                    raise Exception
 
                 segment_id = segment_id + 1
                 bytes_sent = file.tell()
 
                 # Print progress
                 progress = round((bytes_sent / self.total_bytes) * 100, 2)
-                sys.stdout.write(f"\rUploading {progress}..>")
+                sys.stdout.write(f"\rUploading {progress}..")
                 sys.stdout.flush()
 
         sys.stdout.write("\n")
@@ -128,7 +128,8 @@ class MediaTweet:
 
         if state == "failed":
             logger.error("Media processing failed")
-            sys.exit(0)
+            logger.info(f"Processing info: {self.processing_info}")
+            raise Exception("Media processing failed")
 
         check_after_secs = self.processing_info["check_after_secs"]
 
@@ -160,9 +161,14 @@ def upload_media(file_path) -> str:
         str: Uploaded file media id
     """
     tweet = MediaTweet(file_path)
-    tweet.upload_init()
-    tweet.upload_append()
-    tweet.upload_finalize()
-    logger.success("Upload successful!")
-    logger.success(f"Media id: {tweet.media_id}")
+    try:
+        tweet.upload_init()
+        tweet.upload_append()
+        tweet.upload_finalize()
+    except Exception:
+        raise
+    else:
+        logger.success("Upload successful!")
+        logger.success(f"Media id: {tweet.media_id}")
+
     return tweet.media_id
