@@ -3,6 +3,7 @@
 import datetime
 import json
 import requests
+from loguru import logger
 
 from .oauth import OAuth2
 
@@ -37,7 +38,8 @@ def post_tweet(media_id: str) -> None:
     )
 
     if response.status_code != 201:
-        print(f"Request returned an error: {response.status_code} {response.text}")
+        logger.error(f"Posting tweet returned an error: {response.status_code} {response.text}")
     else:
-        json_string = json.dumps(response.json())
-        print(f"Response: {json_string}")
+        json_string = json.dumps(response.json(), indent=4)
+        logger.success("Tweet posted!")
+        logger.success(f"{json_string}")
