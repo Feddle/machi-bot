@@ -6,7 +6,8 @@ from . import media_upload
 def main():
     """Upload and tweet media"""
     # Upload media
-    media_id = media_upload.upload_media()
+    file_path = "./media/imprint.m4v"
+    media_id = media_upload.upload_media(file_path)
     print(f"Media id: {media_id}")
 
     # Create the tweet

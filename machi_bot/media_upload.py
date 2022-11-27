@@ -40,7 +40,7 @@ class MediaTweet:
 
         request_data = {
         "command": "INIT",
-        "media_type": "video/webm",
+        "media_type": "video/mp4",
         "total_bytes": self.total_bytes,
         "media_category": "tweet_video"
         }
@@ -65,6 +65,7 @@ class MediaTweet:
         bytes_sent = 0
         with open(self.video_filename, "rb") as file:
             while bytes_sent < self.total_bytes:
+                # Chunk must be < 5MB
                 chunk = file.read(4*1024*1024)
 
                 print("APPEND")
@@ -76,7 +77,7 @@ class MediaTweet:
                 }
 
                 files = {
-                "media":chunk
+                "media": chunk
                 }
 
                 req = requests.post(
@@ -163,9 +164,16 @@ class MediaTweet:
         print(req.json())
         self.check_status()
 
-def upload_media() -> str:
-    MEDIA_FILENAME = "./media/imprint.m4v"
-    tweet = MediaTweet(MEDIA_FILENAME)
+def upload_media(file_path) -> str:
+    """Uploads file found in the path argument
+
+    Args:
+        file_path (str): Path to file
+
+    Returns:
+        str: Uploaded file media id
+    """
+    tweet = MediaTweet(file_path)
     tweet.upload_init()
     tweet.upload_append()
     tweet.upload_finalize()
