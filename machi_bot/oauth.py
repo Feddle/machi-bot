@@ -10,11 +10,12 @@ from urllib.parse import urlparse, parse_qs
 from requests.auth import HTTPBasicAuth
 from requests_oauthlib import OAuth2Session, OAuth1Session
 from dotenv import load_dotenv
+from loguru import logger
 
 class OAuth1:
     """Class for twitter OAuth1 handling"""
     def __init__(self) -> None:
-        dotenv_path = os.path.join(os.path.dirname(__file__), '.env')
+        dotenv_path = os.path.join(os.path.dirname(__file__), ".env")
         load_dotenv(dotenv_path)
         self.twitter_api_key = os.environ.get("TWITTER_API_KEY")
         self.twitter_api_secret = os.environ.get("TWITTER_API_SECRET")
@@ -31,9 +32,10 @@ class OAuth1:
                 token_file = json.load(file)
 
             access_token = token_file
+            logger.info("Token file found")
         except FileNotFoundError:
             # If token file doesn't exist authorize the app and get a new access token
-
+            logger.info("Token file not found. Starting authorization.")
             request_token_url = "https://api.twitter.com/oauth/request_token"
             oauth_auth_session = OAuth1Session(
                 client_key=self.twitter_api_key,
@@ -44,13 +46,13 @@ class OAuth1:
 
             resource_owner_key = fetch_response.get("oauth_token")
             resource_owner_secret = fetch_response.get("oauth_token_secret")
-            print(f"Got OAuth token: {resource_owner_key}")
 
             # Get authorization
             base_authorization_url = "https://api.twitter.com/oauth/authorize"
             authorization_url = oauth_auth_session.authorization_url(base_authorization_url)
-            print(f"Please go here and authorize: {authorization_url}")
-            authorization_response = input("Paste the full URL here: ")
+            logger.success(f"Please go here and authorize: {authorization_url}")
+            logger.success("Paste the full URL here: ")
+            authorization_response = input()
 
             # Parse query parameters
             response_params = urlparse(authorization_response).query
@@ -77,6 +79,8 @@ class OAuth1:
             # Write the token to file
             with open("token_v1.json", "w+", encoding="utf-8") as file:
                 file.write(json.dumps(access_token, indent=4))
+
+            logger.success("Authorization complete!")
 
         self.oauth_token = access_token["oauth_token"]
         self.oauth_token_secret = access_token["oauth_token_secret"]
@@ -117,12 +121,13 @@ class OAuth2:
             with open("token_v2.json", "r", encoding="utf-8") as file:
                 previous_token = json.load(file)
 
+            logger.info("Token file found")
             # If token has expired refresh it
             # Subtract 5 minutes from expiration to account for clock skew
             now = time.time()
             expire_time = previous_token["expires_at"] - 300
             if now >= expire_time:
-                print("Refreshing token")
+                logger.info("Refreshing token")
                 oauth = OAuth2Session(
                     client_id=self.twitter_client_id,
                     token=previous_token,
@@ -143,12 +148,11 @@ class OAuth2:
                 with open("token_v2.json", "w+", encoding="utf-8") as file:
                     file.write(json.dumps(response, indent=4))
             else:
-                print("Using previous token")
                 access_token = previous_token["access_token"]
 
         except FileNotFoundError:
             # If v2 token doesn't exist authorize the app and get a new access token
-            print("Token file not found. Starting authorization.")
+            logger.info("Token file not found. Starting authorization.")
 
             # Create an authorize URL
             oauth = OAuth2Session(
@@ -162,14 +166,10 @@ class OAuth2:
                 auth_url, code_challenge=code_challenge, code_challenge_method="S256"
             )
 
-            print(
-                "Visit the following URL to authorize your App on behalf of your Twitter handle:"
-            )
-            print(authorization_url)
+            logger.success(f"Please go here and authorize: {authorization_url}")
 
-            authorization_response = input(
-                "Paste in the full URL after you've authorized your App:\n"
-            )
+            logger.success("Paste the full URL here: ")
+            authorization_response = input()
 
             response = oauth.fetch_token(
                 token_url=token_url,
@@ -177,11 +177,12 @@ class OAuth2:
                 client_secret=self.twitter_client_secret,
                 code_verifier=code_verifier
             )
-            print("Access token acquired!")
 
             # Write the token to file
             with open("token_v2.json", "w+", encoding="utf-8") as file:
                 file.write(json.dumps(response, indent=4))
+
+            logger.success("Authorization complete!")
 
             access_token = response["access_token"]
 
