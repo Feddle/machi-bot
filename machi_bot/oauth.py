@@ -11,11 +11,13 @@ from requests.auth import HTTPBasicAuth
 from requests_oauthlib import OAuth2Session, OAuth1Session
 from dotenv import load_dotenv
 from loguru import logger
+from pathlib import Path
 
 class OAuth1:
     """Class for twitter OAuth1 handling"""
     def __init__(self) -> None:
-        dotenv_path = os.path.join(os.path.dirname(__file__), ".env")
+        project_root = Path(__file__).parent.parent
+        dotenv_path = os.path.join(project_root, ".env")
         load_dotenv(dotenv_path)
         self.twitter_api_key = os.environ.get("TWITTER_API_KEY")
         self.twitter_api_secret = os.environ.get("TWITTER_API_SECRET")
