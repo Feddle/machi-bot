@@ -140,3 +140,6 @@ media/
 
 # Config
 config.json
+
+# Database
+database.db

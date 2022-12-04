@@ -8,7 +8,7 @@ from loguru import logger
 from .oauth import OAuth2
 
 
-def post_tweet(media_id: str) -> None:
+def post_tweet(media_id: str) -> dict:
     """Posts a Tweet"""
 
     manage_tweets_endpoint = "https://api.twitter.com/2/tweets"
@@ -43,3 +43,5 @@ def post_tweet(media_id: str) -> None:
         json_string = json.dumps(response.json(), indent=4)
         logger.success("Tweet posted!")
         logger.success(f"{json_string}")
+
+    return response.json()

@@ -167,8 +167,12 @@ def upload_media(file_path) -> str:
         tweet.upload_finalize()
     except Exception:
         raise
-    else:
-        logger.success("Upload successful!")
-        logger.success(f"Media id: {tweet.media_id}")
+    finally:
+        # Delete the created mp4
+        logger.info(f"Removing {file_path}")
+        os.remove(file_path)
+
+    logger.success("Upload successful!")
+    logger.success(f"Media id: {tweet.media_id}")
 
     return tweet.media_id
