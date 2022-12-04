@@ -9,15 +9,21 @@ It's recommended to use python virtual environments. Create one in the project r
 
 https://packaging.python.org/en/latest/guides/installing-using-pip-and-virtual-environments/#creating-a-virtual-environment
 
-`py -m venv env`
+```
+py -m venv env
+```
 
 Activate the environment.
 
-`.\env\Scripts\activate`
+```
+.\env\Scripts\activate
+```
 
 Install requirements
 
-`py -m pip install -r requirements.txt`
+```
+py -m pip install -r requirements.txt
+```
 
 ### Twitter app credentials
 You need to create an application in twitter developer portal.
@@ -71,7 +77,9 @@ You can also specify if you want to print ffmpeg output.
 ```
 
 ## Running
-`py -m machi_bot`
+```
+py -m machi_bot
+```
 
 You need to authorize the app on behalf of your twitter account. Make sure you're logged on the account you want the bot to tweet as.
 
