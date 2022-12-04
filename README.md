@@ -54,13 +54,20 @@ If the video files you want to tweet are not in mp4 you'll need ffmpeg.
 
 https://ffmpeg.org/download.html#build-windows
 
-Add path to your ffmpeg in to the config.json.
+Add path to your ffmpeg and media folder to config.json.
 
 ```JSON
 {
-    "ffmpeg-location": "C:/ffmpeg/bin/ffmpeg.exe"
+    "ffmpeg-location": "C:/ffmpeg/bin/ffmpeg.exe",
+    "media-location": "C:/Users/Machi/Videos"
 }
+```
 
+You can also specify if you want to print ffmpeg output.
+```JSON
+{
+    "ffmpeg-output": true
+}
 ```
 
 ## Running
