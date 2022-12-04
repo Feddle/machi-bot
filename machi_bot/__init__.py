@@ -1,13 +1,17 @@
 """Initialization for twitter bot"""
 import sys
+import os
 import subprocess
 import shlex
 import json
 from loguru import logger
 from . import create_tweet
 from . import media_upload
+from pathlib import Path
 
-with open("machi_bot/config.json", "r", encoding="utf-8") as file:
+PROJECT_ROOT = Path(__file__).parent.parent
+CONFIG_FILE = os.path.join(PROJECT_ROOT, "config.json")
+with open(CONFIG_FILE, "r", encoding="utf-8") as file:
     CONFIG = json.load(file)
 
 def main():
@@ -33,16 +37,16 @@ def main():
     finally:
         # Delete the created mp4
         logger.info(f"Removing {file_path}")
-        #os.remove(file_path)
+        os.remove(file_path)
 
     # Create the tweet
     create_tweet.post_tweet(media_id)
 
 
 def get_file() -> str:
-    root_folder = "./media/"
-    file_name = "Congratulations! Your Account Is Now Enabled For Uploads Longer Than 15 Minutes. [K7wyj8cql9i].webm"
-    file_path = f"{root_folder}{file_name}"
+    media_location = CONFIG.get("media-location")
+    file_name = "anzio.webm"
+    file_path = os.path.join(media_location, file_name)
     file_path_new = convert_to_mp4(file_path)
     return file_path_new
 
@@ -63,11 +67,16 @@ def convert_to_mp4(file_path: str) -> str:
     command = f"{ffmpeg} -y -i '{file_path}' {args} '{file_path_new}'"
     logger.info("Running ffmpeg...")
     try:
+        ffmpeg_output = CONFIG.get("ffmpeg-output")
+        if ffmpeg_output:
+            error_pipe = None
+        else:
+            error_pipe = subprocess.DEVNULL
         subprocess.run(
             shlex.split(command),
             check=True,
             stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL
+            stderr=error_pipe
         )
     except subprocess.CalledProcessError:
         logger.error("Error when running ffmpeg")
