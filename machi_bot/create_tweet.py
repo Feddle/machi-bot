@@ -8,7 +8,7 @@ from loguru import logger
 from .oauth import OAuth2
 
 
-def post_tweet(media_id: str) -> dict:
+def post_tweet(text: str, media_id: str) -> dict:
     """Posts a Tweet"""
 
     manage_tweets_endpoint = "https://api.twitter.com/2/tweets"
@@ -23,8 +23,12 @@ def post_tweet(media_id: str) -> dict:
         "User-Agent": "machikuma-bot"
     }
 
-    now = datetime.datetime.now()
-    request_body["text"] = f"Testing! {now}"
+    if len(text):
+        request_body["text"] = text
+    else:
+        now = datetime.datetime.now()
+        request_body["text"] = f"Testing! {now}"
+
     if media_id:
         request_body["media"] = {"media_ids": [media_id]}
 
