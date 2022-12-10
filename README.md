@@ -69,10 +69,16 @@ Add path to your ffmpeg and media folder to config.json.
 }
 ```
 
-You can also specify if you want to print ffmpeg output.
+You can specify if you want to print ffmpeg output.
 ```JSON
 {
     "ffmpeg-output": true
+}
+```
+Or post link of the tweet to discord webhook.
+```JSON
+{
+    "discord-webhook-url": ""
 }
 ```
 
