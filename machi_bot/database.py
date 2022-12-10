@@ -155,6 +155,6 @@ def get_posts(max_posts: int):
         """,
         (max_posts,)
     )
-    result = posts_result.fetchone()
+    result = posts_result.fetchall()
     db_connection.close()
     return result
