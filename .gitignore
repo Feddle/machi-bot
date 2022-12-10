@@ -137,6 +137,7 @@ token_v2.json
 
 # Other folders
 media/
+video_tmp/
 
 # Config
 config.json
