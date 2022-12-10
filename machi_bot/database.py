@@ -1,6 +1,7 @@
 """Database module"""
 import sys
 import os
+import glob
 import sqlite3
 import json
 import re
@@ -30,8 +31,8 @@ def setup_tables(rebuild = False):
             db_connection.execute("""
                 CREATE TABLE media(
                     media_id INTEGER PRIMARY KEY,
-                    title TEXT NOT NULL,
-                    file_path TEXT UNIQUE NOT NULL,
+                    title NVARCHAR NOT NULL,
+                    file_path NVARCHAR UNIQUE NOT NULL,
                     added TEXT DEFAULT CURRENT_TIMESTAMP
                 )
             """)
@@ -61,12 +62,15 @@ def scan():
     """Iterate over media folder and populate database with filepaths"""
     logger.info("Scanning media files and populating database")
     db_connection = sqlite3.connect(DB_FILE)
-    media_location = CONFIG.get("media-location")
+    media_location = Path(CONFIG.get("media-location"))
     try:
         with db_connection:
-            for media_file in os.listdir(media_location):
-                file_path = Path(media_location).joinpath(Path(media_file)).as_posix()
+            for media_file in glob.iglob(media_location.joinpath("**").as_posix(), recursive=True):
+                file_path = media_location.joinpath(Path(media_file)).as_posix()
+                dir_name = Path(file_path).parent.name
                 title = Path(file_path).stem
+                if Path(file_path).is_dir(): continue
+                if dir_name in CONFIG.get("exclude-folders"): continue
                 try:
                     db_connection.execute(
                         "INSERT INTO media(title, file_path) VALUES (?, ?)",
@@ -82,13 +86,20 @@ def scan():
     finally:
         db_connection.close()
 
-def get_media(media: str) -> tuple[int, str]:
-    """Fetches file from database ordered by oldest timestamp"""
+def get_media(media: str) -> tuple[int, str, str]:
+    """Fetches a file from database
+
+    Args:
+        media (str): Response from twitter
+
+    Returns:
+        tuple[int, str, str]: Tuple with database media_id, file path and media title
+    """
     db_connection = sqlite3.connect(DB_FILE)
     if media is not None and len(media) > 0:
         media_result = db_connection.execute(
             """
-            SELECT media_id, file_path
+            SELECT media_id, file_path, title
             FROM media
             WHERE file_path = ?
             """,
@@ -98,17 +109,34 @@ def get_media(media: str) -> tuple[int, str]:
             logger.error(f"No media found with path '{media}'")
             sys.exit(1)
     else:
-        media_result = db_connection.execute("""
-            SELECT m.media_id, m.file_path
+        # Fetch random media that hasn't been posted
+        media_result = db_connection.execute(
+            """
+            SELECT m.media_id, m.file_path, m.title
             FROM media m
             LEFT JOIN posts p ON p.media_id = m.media_id
-            ORDER BY p.timestamp ASC
+            WHERE p.post_id IS NULL
+            ORDER BY RANDOM()
             LIMIT 1
-        """).fetchone()
+            """
+        ).fetchone()
+        # If all media has been posted, pick the first timestamped post
+        if media_result is None:
+            media_result = db_connection.execute(
+                """
+                SELECT m.media_id, m.file_path, m.title
+                FROM media m
+                LEFT JOIN posts p ON p.media_id = m.media_id
+                ORDER BY p.timestamp ASC
+                LIMIT 1
+                """
+            ).fetchone()
+        # If still no media found print an error
         if media_result is None:
             logger.error("No media found. Try scanning the library first.")
             sys.exit(1)
 
+    # If file is not on disk
     if not os.path.exists(media_result[1]):
         logger.error("Media found in database but not on disk. Removing db entry.")
         db_connection.execute(
@@ -117,6 +145,7 @@ def get_media(media: str) -> tuple[int, str]:
         )
         db_connection.commit()
         sys.exit(1)
+
     db_connection.close()
     return media_result
 
@@ -128,7 +157,7 @@ def insert_post(twitter_response: dict, media_id: str) -> str:
         media_id (str): database media_id
 
     Returns:
-        _type_: tweet link
+        str: tweet link
     """
     data = twitter_response["data"]
     link = re.search(r"https://t\.co/.+$", data["text"]).group()
