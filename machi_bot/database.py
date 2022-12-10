@@ -1,3 +1,5 @@
+"""Database module"""
+import sys
 import os
 import sqlite3
 import json
@@ -11,19 +13,20 @@ DB_FILE = os.path.join(PROJECT_ROOT, "database.db")
 with open(CONFIG_FILE, "r", encoding="utf-8") as file:
     CONFIG = json.load(file)
 
-def setup():
-    """Main database setup function"""
-    logger.info("Setting up database...")
-    setup_tables()
-    logger.info("Scanning media files and populating database...")
-    populate()
 
-def setup_tables():
+def setup_tables(rebuild = False):
     """Create necessary tables if they don't exist"""
+    if rebuild:
+        logger.info("Rebuilding media database")
+    else:
+        logger.info("Setting up database")
     db_connection = sqlite3.connect(DB_FILE)
     try:
         media_table = db_connection.execute("SELECT name FROM sqlite_master WHERE name = 'media'")
-        if media_table.fetchone() is None:
+        table_exists = media_table.fetchone() is not None
+        if table_exists and rebuild:
+            db_connection.execute("""DROP TABLE media""")
+        if not table_exists or rebuild:
             db_connection.execute("""
                 CREATE TABLE media(
                     media_id INTEGER PRIMARY KEY,
@@ -32,6 +35,8 @@ def setup_tables():
                     added TEXT DEFAULT CURRENT_TIMESTAMP
                 )
             """)
+            # Populate new db
+            scan()
 
         posts_table = db_connection.execute("SELECT name FROM sqlite_master WHERE name = 'posts'")
         if posts_table.fetchone() is None:
@@ -52,17 +57,21 @@ def setup_tables():
         db_connection.close()
 
 
-def populate():
+def scan():
     """Iterate over media folder and populate database with filepaths"""
+    logger.info("Scanning media files and populating database")
     db_connection = sqlite3.connect(DB_FILE)
     media_location = CONFIG.get("media-location")
     try:
         with db_connection:
-            for file in os.listdir(media_location):
-                file_path = Path(media_location).joinpath(Path(file)).as_posix()
+            for media_file in os.listdir(media_location):
+                file_path = Path(media_location).joinpath(Path(media_file)).as_posix()
                 title = Path(file_path).stem
                 try:
-                    db_connection.execute("INSERT INTO media(title, file_path) VALUES (?, ?)", (title, file_path))
+                    db_connection.execute(
+                        "INSERT INTO media(title, file_path) VALUES (?, ?)",
+                        (title, file_path)
+                    )
                 except sqlite3.IntegrityError as err:
                     if err.sqlite_errorname == "SQLITE_CONSTRAINT_UNIQUE":
                         logger.info(f"Filepath '{file_path}' already in database")
@@ -73,20 +82,35 @@ def populate():
     finally:
         db_connection.close()
 
-def get_media() -> tuple[int, str]:
+def get_media(media: str) -> tuple[int, str]:
     """Fetches file from database ordered by oldest timestamp"""
     db_connection = sqlite3.connect(DB_FILE)
-    exec = db_connection.execute("""
-        SELECT m.media_id, m.file_path
-        FROM media m
-        LEFT JOIN posts p ON p.media_id = m.media_id
-        ORDER BY p.timestamp ASC
-        LIMIT 1
-    """)
-    result = exec.fetchone()
+    if media is not None and len(media) > 0:
+        media_result = db_connection.execute(
+            """
+            SELECT media_id, file_path
+            FROM media
+            WHERE file_path = ?
+            """,
+            (Path(media).as_posix(),)
+        ).fetchone()
+        if media_result is None:
+            logger.error(f"No media found with path '{media}'")
+            sys.exit(1)
+    else:
+        media_result = db_connection.execute("""
+            SELECT m.media_id, m.file_path
+            FROM media m
+            LEFT JOIN posts p ON p.media_id = m.media_id
+            ORDER BY p.timestamp ASC
+            LIMIT 1
+        """).fetchone()
+        if media_result is None:
+            logger.error("No media found. Try scanning the library first.")
+            sys.exit(1)
     db_connection.close()
     # TODO: if file is not found on disk delete the database row
-    return result
+    return media_result
 
 def insert_post(twitter_response: dict, media_id: str):
     """Inserts tweet into posts table"""
@@ -95,5 +119,24 @@ def insert_post(twitter_response: dict, media_id: str):
     data = (data["text"], media_id, link, data["id"])
     db_connection = sqlite3.connect(DB_FILE)
     with db_connection:
-        db_connection.execute("INSERT INTO posts(post_body, media_id, link, tweet_id) VALUES (?, ?, ?, ?)", data)
+        db_connection.execute(
+            "INSERT INTO posts(post_body, media_id, link, tweet_id) VALUES (?, ?, ?, ?)",
+            data
+        )
     db_connection.close()
+
+def get_posts(max_posts: int):
+    """Fetches previous posts from database"""
+    db_connection = sqlite3.connect(DB_FILE)
+    posts_result = db_connection.execute(
+        """
+        SELECT post_id, post_body, media_id, link, tweet_id, timestamp
+        FROM posts
+        ORDER BY timestamp DESC
+        LIMIT ?
+        """,
+        (max_posts,)
+    )
+    result = posts_result.fetchone()
+    db_connection.close()
+    return result
