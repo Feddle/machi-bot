@@ -56,11 +56,11 @@ TWITTER_CLIENT_SECRET=
 ### Config
 Create config.json in the project root.
 
-If the video files you want to tweet are not in mp4 you'll need ffmpeg.
+You'll need ffmpeg to convert videos to twitter approved mp4.
 
 https://ffmpeg.org/download.html#build-windows
 
-Add path to your ffmpeg and media folder to config.json.
+Add path to your ffmpeg and media folder to config.json. Media folder is scanned recursively.
 
 ```JSON
 {
@@ -69,16 +69,12 @@ Add path to your ffmpeg and media folder to config.json.
 }
 ```
 
-You can specify if you want to print ffmpeg output.
+You can optionally specify if you want to print ffmpeg output, post link of the tweet to discord webhook or exclude folders from media scan:
 ```JSON
 {
-    "ffmpeg-output": true
-}
-```
-Or post link of the tweet to discord webhook.
-```JSON
-{
-    "discord-webhook-url": ""
+    "ffmpeg-output": true,
+    "discord-webhook-url": "",
+    "exclude-folders": ["lewd"]
 }
 ```
 

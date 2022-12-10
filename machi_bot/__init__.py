@@ -63,11 +63,13 @@ def create_post(text: str, media: str) -> None:
     media = get_file(media)
     media_id = media[0]
     file_path = media[1]
+    title = media[2]
 
     # Upload media
     twitter_media_id = media_upload.upload_media(file_path)
 
     # Create the tweet
+    if len(text) == 0: text = title
     response = create_tweet.post_tweet(text, twitter_media_id)
 
     # Insert post to db
@@ -91,20 +93,21 @@ def post_to_discord(content: str) -> None:
     )
 
 
-def get_file(media_path: str) -> tuple[int, str]:
+def get_file(media_path: str) -> tuple[int, str, str]:
     """Fetches media file from database and converts it to mp4
 
     Args:
         media_path (str): File path
 
     Returns:
-        tuple[int, str]: Tuple with database media_id and mp4 file path
+        tuple[int, str, str]: Tuple with database media_id, mp4 file path and media title
     """
     media = machidb.get_media(media_path)
     media_id = media[0]
     file_path = media[1]
+    title = media[2]
     file_path_new = convert_to_mp4(file_path)
-    return (media_id, file_path_new)
+    return (media_id, file_path_new, title)
 
 def convert_to_mp4(file_path: str) -> str:
     """Converts file from webm to mp4 using ffmpeg
