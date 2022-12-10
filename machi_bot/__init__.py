@@ -4,6 +4,7 @@ import os
 import subprocess
 import shlex
 import json
+import requests
 from pathlib import Path
 import argparse
 from loguru import logger
@@ -16,8 +17,8 @@ CONFIG_FILE = os.path.join(PROJECT_ROOT, "config.json")
 with open(CONFIG_FILE, "r", encoding="utf-8") as file:
     CONFIG = json.load(file)
 
-def main():
-    """Upload and tweet media"""
+def main() -> None:
+    """Main function"""
     configure_logger()
 
     parser = argparse.ArgumentParser(prog="machi-bot", description="Twitter bot for posting videos")
@@ -50,10 +51,8 @@ def main():
         posts = machidb.get_posts(args.previous)
         logger.info(posts)
 
-    return
 
-
-def create_post(text: str, media: str):
+def create_post(text: str, media: str) -> None:
     """Main function for posting tweets
 
     Args:
@@ -72,14 +71,38 @@ def create_post(text: str, media: str):
     response = create_tweet.post_tweet(text, twitter_media_id)
 
     # Insert post to db
-    machidb.insert_post(response, media_id)
+    link = machidb.insert_post(response, media_id)
+
+    if CONFIG.get("discord-webhook-url"):
+        post_to_discord(link)
+
+def post_to_discord(content: str) -> None:
+    """Post message to discord webhook
+
+    Args:
+        content (str): message content
+    """
+    payload = {"content": content}
+    requests.request(
+        method="POST",
+        url=CONFIG.get("discord-webhook-url"),
+        data=payload,
+        timeout=10
+    )
 
 
 def get_file(media_path: str) -> tuple[int, str]:
+    """Fetches media file from database and converts it to mp4
+
+    Args:
+        media_path (str): File path
+
+    Returns:
+        tuple[int, str]: Tuple with database media_id and mp4 file path
+    """
     media = machidb.get_media(media_path)
     media_id = media[0]
     file_path = media[1]
-    # TODO: if file is mp4 no need for conversion (propably)
     file_path_new = convert_to_mp4(file_path)
     return (media_id, file_path_new)
 
@@ -100,7 +123,6 @@ def convert_to_mp4(file_path: str) -> str:
     file_path_new = temp_dir.joinpath(new_filename).as_posix()
 
     ffmpeg = CONFIG.get("ffmpeg-location")
-    # TODO: if mp4 exists dont convert
     args = "-movflags faststart -c:v libx264 -preset slow -crf 17 -c:a aac -b:a 160k"
     command = f"{ffmpeg} -y -i '{file_path}' {args} '{file_path_new}'"
     logger.info("Running ffmpeg...")
