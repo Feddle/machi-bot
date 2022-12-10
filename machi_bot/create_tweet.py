@@ -1,6 +1,5 @@
 """Creating and posting a tweet"""
 
-import datetime
 import json
 import requests
 from loguru import logger
@@ -23,11 +22,7 @@ def post_tweet(text: str, media_id: str) -> dict:
         "User-Agent": "machikuma-bot"
     }
 
-    if len(text):
-        request_body["text"] = text
-    else:
-        now = datetime.datetime.now()
-        request_body["text"] = f"Testing! {now}"
+    request_body["text"] = text
 
     if media_id:
         request_body["media"] = {"media_ids": [media_id]}
