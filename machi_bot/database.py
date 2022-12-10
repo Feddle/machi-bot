@@ -48,7 +48,7 @@ def setup_tables(rebuild = False):
                     link TEXT NOT NULL,
                     tweet_id TEXT NOT NULL,
                     timestamp TEXT DEFAULT CURRENT_TIMESTAMP,
-                    FOREIGN KEY(media_id) REFERENCES media(media_id)
+                    FOREIGN KEY(media_id) REFERENCES media(media_id) ON DELETE SET NULL
                 )
             """)
     except:
@@ -108,12 +108,28 @@ def get_media(media: str) -> tuple[int, str]:
         if media_result is None:
             logger.error("No media found. Try scanning the library first.")
             sys.exit(1)
+
+    if not os.path.exists(media_result[1]):
+        logger.error("Media found in database but not on disk. Removing db entry.")
+        db_connection.execute(
+            """DELETE FROM media WHERE media_id = ?""",
+            (media_result[0],)
+        )
+        db_connection.commit()
+        sys.exit(1)
     db_connection.close()
-    # TODO: if file is not found on disk delete the database row
     return media_result
 
-def insert_post(twitter_response: dict, media_id: str):
-    """Inserts tweet into posts table"""
+def insert_post(twitter_response: dict, media_id: str) -> str:
+    """Inserts tweet into posts table
+
+    Args:
+        twitter_response (dict): Response from twitter
+        media_id (str): database media_id
+
+    Returns:
+        _type_: tweet link
+    """
     data = twitter_response["data"]
     link = re.search(r"https://t\.co/.+$", data["text"]).group()
     data = (data["text"], media_id, link, data["id"])
@@ -124,6 +140,8 @@ def insert_post(twitter_response: dict, media_id: str):
             data
         )
     db_connection.close()
+    return link
+
 
 def get_posts(max_posts: int):
     """Fetches previous posts from database"""
