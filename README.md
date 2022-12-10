@@ -78,10 +78,10 @@ You can also specify if you want to print ffmpeg output.
 
 ## Running
 ```
-py -m machi_bot
+py -m machi_bot --help
 ```
 
-You need to authorize the app on behalf of your twitter account. Make sure you're logged on the account you want the bot to tweet as.
+When posting you need to authorize the app on behalf of your twitter account. Make sure you're logged on the account you want the bot to tweet as.
 
 Follow the authorization links on the terminal. By our default configuration twitter will redirect to localhost. Just paste the whole url in terminal.
 
