@@ -134,7 +134,7 @@ class MediaTweet:
         check_after_secs = self.processing_info["check_after_secs"]
 
         logger.info(f"Checking after {str(check_after_secs)} seconds")
-        time.sleep(check_after_secs)
+        time.sleep(check_after_secs + 1)
 
         request_params = {
             "command": "STATUS",
