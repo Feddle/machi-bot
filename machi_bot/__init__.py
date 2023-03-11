@@ -41,7 +41,7 @@ def main() -> None:
         machidb.setup_tables(args.rebuild)
     if args.scan:
         # Do media scan
-        machidb.scan()
+        machidb.setup_tables(args.rebuild)
     if args.post:
         machidb.setup_tables(args.rebuild)
         # Select media and text and do a post
