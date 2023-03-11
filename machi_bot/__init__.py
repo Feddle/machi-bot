@@ -41,7 +41,7 @@ def main() -> None:
         machidb.setup_tables(args.rebuild)
     if args.scan:
         # Do media scan
-        machidb.scan()
+        machidb.setup_tables(args.rebuild)
     if args.post:
         machidb.setup_tables(args.rebuild)
         # Select media and text and do a post
@@ -126,8 +126,8 @@ def convert_to_mp4(file_path: str) -> str:
     file_path_new = temp_dir.joinpath(new_filename).as_posix()
 
     ffmpeg = CONFIG.get("ffmpeg-location")
-    args = "-movflags faststart -c:v libx264 -preset slow -crf 17 -c:a aac -b:a 160k"
-    command = f"{ffmpeg} -y -i '{file_path}' {args} '{file_path_new}'"
+    args = "-movflags faststart -c:v libx264 -vf 'pad=ceil(iw/2)*2:ceil(ih/2)*2' -preset slow -crf 17 -c:a aac -b:a 160k"
+    command = f"{ffmpeg} -y -i \"{file_path}\" {args} \"{file_path_new}\""
     logger.info("Running ffmpeg...")
     try:
         ffmpeg_output = CONFIG.get("ffmpeg-output")
