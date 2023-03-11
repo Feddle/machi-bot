@@ -88,4 +88,45 @@ When posting you need to authorize the app on behalf of your twitter account. Ma
 Follow the authorization links on the terminal. By our default configuration twitter will redirect to localhost. Just paste the whole url in terminal.
 
 
+## Docker
+Requires authenticating with the normal app and copying token_v1.json and token_v2.json to the appdata folder you're mounting to docker.
+### Docker-compose
+```YAML
+---
+services:
+  machi_bot:
+    image: docker.io/feddle/machi-bot:latest
+    init: true
+    container_name: machi_bot
+    environment:
+      - EXCLUDE_FOLDERS=['lewd', 'work']
+      - DISCORD_WEBHOOK_URL=
+      - TWITTER_API_KEY=
+      - TWITTER_API_SECRET=
+      - TWITTER_BEARER_TOKEN=
+      - TWITTER_CLIENT_ID=
+      - TWITTER_CLIENT_SECRET=
+      - TWITTER_V1_ACCESS_TOKEN=
+      - TWITTER_V1_SECRET=
+    volumes:
+      - <path_to_videos>:/media
+      - <path_to_tokens_and_db>:/appdata
+```
+### Cron example
+Create a cron file in the root of the project.
+```sh
+# Example of job definition:
+# .---------------- minute (0 - 59)
+# |  .------------- hour (0 - 23)
+# |  |  .---------- day of month (1 - 31)
+# |  |  |  .------- month (1 - 12) OR jan,feb,mar,apr ...
+# |  |  |  |  .---- day of week (0 - 6) (Sunday=0 or 7) OR sun,mon,tue,wed,thu,fri,sat
+# |  |  |  |  |
+# *  *  *  *  * user-name command to be executed
+0 9,16,23 * * * cd /app/machi-bot; python3 -m machi_bot --previous 10 -p >/proc/1/fd/1 2>/proc/1/fd/2
+
+# An empty line is required at the end of this file for a valid cron file.
+
+```
+
 
