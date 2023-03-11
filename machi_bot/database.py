@@ -10,10 +10,10 @@ from loguru import logger
 
 PROJECT_ROOT = Path(__file__).parent.parent
 CONFIG_FILE = os.path.join(PROJECT_ROOT, "config.json")
-DB_FILE = os.path.join(PROJECT_ROOT, "database.db")
 with open(CONFIG_FILE, "r", encoding="utf-8") as file:
     CONFIG = json.load(file)
-
+APPDATA = Path(CONFIG.get("appdata"))
+DB_FILE = os.path.join(APPDATA, "database.db")
 
 def setup_tables(rebuild = False):
     """Create necessary tables if they don't exist"""
@@ -36,8 +36,6 @@ def setup_tables(rebuild = False):
                     added TEXT DEFAULT CURRENT_TIMESTAMP
                 )
             """)
-            # Populate new db
-            scan()
 
         posts_table = db_connection.execute("SELECT name FROM sqlite_master WHERE name = 'posts'")
         if posts_table.fetchone() is None:
@@ -52,6 +50,9 @@ def setup_tables(rebuild = False):
                     FOREIGN KEY(media_id) REFERENCES media(media_id) ON DELETE SET NULL
                 )
             """)
+
+        # Populate new db
+        scan()
     except:
         raise
     finally:
@@ -78,7 +79,9 @@ def scan():
                     )
                 except sqlite3.IntegrityError as err:
                     if err.sqlite_errorname == "SQLITE_CONSTRAINT_UNIQUE":
-                        logger.info(f"Filepath '{file_path}' already in database")
+                        pass
+                        # TODO: print files being inserted and not already in db
+                        # logger.info(f"Filepath '{file_path}' already in database")
                     else:
                         raise
     except:
@@ -138,7 +141,7 @@ def get_media(media: str) -> tuple[int, str, str]:
 
     # If file is not on disk
     if not os.path.exists(media_result[1]):
-        logger.error("Media found in database but not on disk. Removing db entry.")
+        logger.error(f"Media found in database but not on disk ({media_result[1]}). Removing db entry.")
         db_connection.execute(
             """DELETE FROM media WHERE media_id = ?""",
             (media_result[0],)
