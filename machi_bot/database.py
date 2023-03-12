@@ -89,65 +89,68 @@ def scan():
     finally:
         db_connection.close()
 
-def get_media(media: str) -> tuple[int, str, str]:
+def get_media(media_path: str) -> tuple[int, str, str]:
     """Fetches a file from database
 
     Args:
-        media (str): Response from twitter
+        media_path (str): Media file_path
 
     Returns:
         tuple[int, str, str]: Tuple with database media_id, file path and media title
     """
     db_connection = sqlite3.connect(DB_FILE)
-    if media is not None and len(media) > 0:
-        media_result = db_connection.execute(
-            """
-            SELECT media_id, file_path, title
-            FROM media
-            WHERE file_path = ?
-            """,
-            (Path(media).as_posix(),)
-        ).fetchone()
-        if media_result is None:
-            logger.error(f"No media found with path '{media}'")
-            sys.exit(1)
-    else:
-        # Fetch random media that hasn't been posted
-        media_result = db_connection.execute(
-            """
-            SELECT m.media_id, m.file_path, m.title
-            FROM media m
-            LEFT JOIN posts p ON p.media_id = m.media_id
-            WHERE p.post_id IS NULL
-            ORDER BY RANDOM()
-            LIMIT 1
-            """
-        ).fetchone()
-        # If all media has been posted, pick the first timestamped post
-        if media_result is None:
+    media_found = False
+    while not media_found:
+        if media_path is not None and len(media_path) > 0:
+            media_result = db_connection.execute(
+                """
+                SELECT media_id, file_path, title
+                FROM media
+                WHERE file_path = ?
+                """,
+                (Path(media_path).as_posix(),)
+            ).fetchone()
+            if media_result is None:
+                logger.error(f"No media found with path '{media_path}'")
+                sys.exit(1)
+        else:
+            # Fetch random media that hasn't been posted
             media_result = db_connection.execute(
                 """
                 SELECT m.media_id, m.file_path, m.title
                 FROM media m
                 LEFT JOIN posts p ON p.media_id = m.media_id
-                ORDER BY p.timestamp ASC
+                WHERE p.post_id IS NULL
+                ORDER BY RANDOM()
                 LIMIT 1
                 """
             ).fetchone()
-        # If still no media found print an error
-        if media_result is None:
-            logger.error("No media found. Try scanning the library first.")
-            sys.exit(1)
+            # If all media has been posted, pick the first timestamped post
+            if media_result is None:
+                media_result = db_connection.execute(
+                    """
+                    SELECT m.media_id, m.file_path, m.title
+                    FROM media m
+                    LEFT JOIN posts p ON p.media_id = m.media_id
+                    ORDER BY p.timestamp ASC
+                    LIMIT 1
+                    """
+                ).fetchone()
+            # If still no media found print an error
+            if media_result is None:
+                logger.error("No media found. Try scanning the library first.")
+                sys.exit(1)
 
-    # If file is not on disk
-    if not os.path.exists(media_result[1]):
-        logger.error(f"Media found in database but not on disk ({media_result[1]}). Removing db entry.")
-        db_connection.execute(
-            """DELETE FROM media WHERE media_id = ?""",
-            (media_result[0],)
-        )
-        db_connection.commit()
-        sys.exit(1)
+        # If file is not on disk
+        if not os.path.exists(media_result[1]):
+            logger.error(f"Media found in database but not on disk ({media_result[1]}). Removing db entry.")
+            db_connection.execute(
+                """DELETE FROM media WHERE media_id = ?""",
+                (media_result[0],)
+            )
+            db_connection.commit()
+        else:
+            media_found = True
 
     db_connection.close()
     return media_result
