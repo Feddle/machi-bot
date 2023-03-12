@@ -5,6 +5,7 @@
 .gitattributes
 
 # Secret files
+.env
 token_v1.json
 token_v2.json
 
