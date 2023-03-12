@@ -24,5 +24,4 @@ TWITTER_V1_ACCESS_TOKEN=$TWITTER_V1_ACCESS_TOKEN
 TWITTER_V1_SECRET=$TWITTER_V1_SECRET
 EOF
 
-env >> /etc/environment
-crond -f -l 2
+python3 -m machi_bot --previous 10 -p
