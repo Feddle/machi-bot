@@ -138,9 +138,14 @@ token_v2.json
 # Other folders
 media/
 video_tmp/
+appdata/
 
 # Config
 config.json
+config.json.bak
 
 # Database
 database.db
+
+# Docker
+docker-compose.yaml
