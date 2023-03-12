@@ -45,22 +45,23 @@ def main() -> None:
     if args.post:
         machidb.setup_tables(args.rebuild)
         # Select media and text and do a post
-        create_post(text=args.text, media=args.media)
+        create_post(text=args.text, media_path=args.media)
     if args.previous:
         # Print previous posts
         posts = machidb.get_posts(args.previous)
-        logger.info(posts)
+        json_string = json.dumps(posts, indent=4)
+        logger.info(f"{json_string}")
 
 
-def create_post(text: str, media: str) -> None:
+def create_post(text: str, media_path: str) -> None:
     """Main function for posting tweets
 
     Args:
         text (str): Text to tweet
-        media (str): Media filepath to tweet
+        media_path (str): Media filepath
     """
     # Select file and convert it to mp4
-    media = get_file(media)
+    media = get_file(media_path)
     media_id = media[0]
     file_path = media[1]
     title = media[2]
@@ -106,6 +107,7 @@ def get_file(media_path: str) -> tuple[int, str, str]:
     media_id = media[0]
     file_path = media[1]
     title = media[2]
+    logger.info(f"Media fetched: {file_path}")
     file_path_new = convert_to_mp4(file_path)
     return (media_id, file_path_new, title)
 
@@ -150,7 +152,7 @@ def convert_to_mp4(file_path: str) -> str:
             os.remove(file_path_new)
         raise
 
-    logger.success("Converting video to mp4 successful!")
+    logger.success("Conversion successful!")
     return file_path_new
 
 def configure_logger() -> None:
