@@ -1,5 +1,5 @@
 # Machi-bot
-Bot for posting videos to twitter.
+Bot for posting videos (webm) to twitter.
 
 ## Setup (Windows)
 ### Python
