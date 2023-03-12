@@ -1,7 +1,7 @@
 # Machi-bot
 Bot for posting videos to twitter.
 
-## Setup
+## Setup (Windows)
 ### Python
 You need atleast python 3 (tested on 3.11.0). Make sure to add python to path.
 
