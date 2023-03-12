@@ -61,11 +61,13 @@ You'll need ffmpeg to convert videos to twitter approved mp4.
 https://ffmpeg.org/download.html#build-windows
 
 Add path to your ffmpeg and media folder to config.json. Media folder is scanned recursively.
+You'll also need to add the appdata folder where you want your database to be.
 
 ```JSON
 {
     "ffmpeg-location": "C:/ffmpeg/bin/ffmpeg.exe",
-    "media-location": "C:/Users/Machi/Videos"
+    "media-location": "C:/Users/Machi/Videos",
+    "appdata": "D:/personal_projects/machi-bot"
 }
 ```
 
