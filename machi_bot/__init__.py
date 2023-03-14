@@ -34,6 +34,8 @@ def main() -> None:
         help="Path for post media")
     parser.add_argument("--previous", metavar="COUNT", const=10, nargs="?",
         help="Prints number of previous posts")
+    parser.add_argument("-g", "--get", action="store_true",
+        help="Fetches a single tweet. For now only for auth testing.")
 
     args = parser.parse_args()
 
@@ -51,6 +53,8 @@ def main() -> None:
         posts = machidb.get_posts(args.previous)
         json_string = json.dumps(posts, indent=4)
         logger.info(f"{json_string}")
+    if args.get:
+        create_tweet.get_tweet()
 
 
 def create_post(text: str, media_path: str) -> None:
@@ -73,11 +77,12 @@ def create_post(text: str, media_path: str) -> None:
     if len(text) == 0: text = title
     response = create_tweet.post_tweet(text, twitter_media_id)
 
-    # Insert post to db
-    link = machidb.insert_post(response, media_id)
+    if response.status_code == 201:
+        # Insert post to db
+        link = machidb.insert_post(response.json(), media_id)
 
-    if CONFIG.get("discord-webhook-url"):
-        post_to_discord(link)
+        if CONFIG.get("discord-webhook-url"):
+            post_to_discord(link)
 
 def post_to_discord(content: str) -> None:
     """Post message to discord webhook
