@@ -48,7 +48,12 @@ class MediaTweet:
             auth=self.auth_session,
             timeout=10
         )
-        media_id = req.json()["media_id"]
+        try:
+            media_id = req.json()["media_id"]
+        except KeyError:
+            logger.error("Error initializing upload")
+            logger.error(req.json())
+            raise
 
         self.media_id = str(media_id)
 
@@ -114,6 +119,10 @@ class MediaTweet:
         )
 
         self.processing_info = req.json().get("processing_info", None)
+        if self.processing_info is None:
+            logger.warning("Unexpected finalize response")
+            logger.warning(req.json())
+            raise Exception("Unexpected finalize response")
         self.check_status()
 
 
@@ -131,7 +140,12 @@ class MediaTweet:
             logger.info(f"Processing info: {self.processing_info}")
             raise Exception("Media processing failed")
 
-        check_after_secs = self.processing_info["check_after_secs"]
+        try:
+            check_after_secs = self.processing_info["check_after_secs"]
+        except KeyError:
+            logger.warning("Error reading upload state")
+            logger.warning(self.processing_info)
+            check_after_secs = 5
 
         logger.info(f"Checking after {str(check_after_secs)} seconds")
         time.sleep(check_after_secs + 1)
@@ -164,7 +178,12 @@ def upload_media(file_path) -> str:
     try:
         tweet.upload_init()
         tweet.upload_append()
-        tweet.upload_finalize()
+        try:
+            tweet.upload_finalize()
+        except Exception:
+            logger.info("Retrying finalize in 5 seconds")
+            time.sleep(5)
+            tweet.upload_finalize()
     except Exception:
         raise
     finally:

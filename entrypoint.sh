@@ -24,4 +24,4 @@ TWITTER_V1_ACCESS_TOKEN=$TWITTER_V1_ACCESS_TOKEN
 TWITTER_V1_SECRET=$TWITTER_V1_SECRET
 EOF
 
-python3 -m machi_bot --previous 10 -p
+python3 -m machi_bot -p
