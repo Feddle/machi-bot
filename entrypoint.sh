@@ -3,16 +3,33 @@
 cp /appdata/token_v1.json /app/machi-bot
 cp /appdata/token_v2.json /app/machi-bot
 
-cat << EOF > config.json
-{
-    "ffmpeg-location": "ffmpeg",
-    "media-location": "/media",
-    "appdata": "/appdata",
-    "exclude-folders": "$EXCLUDE_FOLDERS",
-    "ffmpeg-output": false,
-    "discord-webhook-url": "$DISCORD_WEBHOOK_URL"
-}
-EOF
+# Get the value of the EXCLUDE_FOLDERS environment variable
+exclude_folders=$EXCLUDE_FOLDERS
+
+# Convert the comma-separated list to a JSON array of strings
+exclude_folders_array=$(echo "$exclude_folders" | jq -R 'split(",")')
+
+# Create the JSON object with the desired keys and values
+json_object=$(echo '{}' | jq \
+    --arg ffmpeg_location "ffmpeg" \
+    --arg media_location "/media" \
+    --arg appdata "/appdata" \
+    --argjson exclude_folders "$exclude_folders_array" \
+    --argjson ffmpeg_output false \
+    --arg discord_webhook_url "$DISCORD_WEBHOOK_URL" \
+    '. +
+    {
+        "ffmpeg-location": $ffmpeg_location,
+        "media-location": $media_location,
+        "appdata": $appdata,
+        "exclude-folders": $exclude_folders,
+        "ffmpeg-output": $ffmpeg_output,
+        "discord-webhook-url": $discord_webhook_url
+    }'
+)
+
+# Write the JSON object to a file
+echo "$json_object" > config.json
 
 cat << EOF > .env
 TWITTER_API_KEY=$TWITTER_API_KEY

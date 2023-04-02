@@ -95,6 +95,8 @@ Follow the authorization links on the terminal. By our default configuration twi
 ## Docker
 Requires authenticating with the normal app and copying token_v1.json and token_v2.json to the appdata folder you're mounting to docker.
 ### Docker-compose
+Set EXCLUDE_FOLDERS as a comma separated string
+
 ```YAML
 ---
 services:
@@ -103,7 +105,7 @@ services:
     init: true
     container_name: machi_bot
     environment:
-      - EXCLUDE_FOLDERS=['lewd', 'work']
+      - EXCLUDE_FOLDERS=tmp/foobar,work,lewd
       - DISCORD_WEBHOOK_URL=
       - TWITTER_API_KEY=
       - TWITTER_API_SECRET=

@@ -12,7 +12,7 @@ WORKDIR /app/machi-bot
 
 # Install dependencies
 RUN \
-    apk add --no-cache ffmpeg && \
+    apk add --no-cache ffmpeg jq && \
     pip install -U --no-cache-dir -r requirements.txt && \
     chmod +x /app/machi-bot/entrypoint.sh
 
