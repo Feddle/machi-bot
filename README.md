@@ -71,14 +71,16 @@ You'll also need to add the appdata folder where you want your database to be.
 }
 ```
 
-You can optionally specify if you want to print ffmpeg output, post link of the tweet to discord webhook or exclude folders from media scan:
+You can optionally specify if you want to print ffmpeg output, post link of the tweet to discord webhook or exclude paths from media scan.
 ```JSON
 {
     "ffmpeg-output": true,
     "discord-webhook-url": "",
-    "exclude-folders": ["lewd"]
+    "exclude-folders": ["lewd", "tmp/foobar"]
 }
 ```
+
+Excluded paths are read starting from media-location. For example with `"media-location": "C:/Users/Machi/Videos"` and `"exclude-folders": ["tmp/foobar"]`, `C:/Users/Machi/Videos/tmp/foobar` is skipped but everything in `C:/Users/Machi/Videos/tmp` is read.
 
 ## Running
 ```

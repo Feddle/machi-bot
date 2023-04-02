@@ -64,26 +64,48 @@ def scan():
     logger.info("Scanning media files and populating database")
     db_connection = sqlite3.connect(DB_FILE)
     media_location = Path(CONFIG.get("media-location"))
+
+    # Create real paths from excluded paths
+    excluded_paths = []
+    for folder in CONFIG.get("exclude-folders"):
+        dir_path = os.path.normpath(os.path.join(media_location, folder))
+        excluded_paths.append(dir_path)
     try:
-        with db_connection:
-            for media_file in glob.iglob(media_location.joinpath("**").as_posix(), recursive=True):
-                file_path = media_location.joinpath(Path(media_file)).as_posix()
-                dir_name = Path(file_path).parent.name
-                title = Path(file_path).stem
-                if Path(file_path).is_dir(): continue
-                if dir_name in CONFIG.get("exclude-folders"): continue
+        # Traverse the media folder
+        for root, dirs, files in os.walk(media_location, topdown=True):
+            # Remove excluded folders/paths from the directory list to traverse
+            new_dirs = []
+            for item in dirs:
+                dir_normpath = os.path.normpath(os.path.join(root, item))
+                if dir_normpath not in excluded_paths:
+                    new_dirs.append(item)
+            dirs[:] = new_dirs
+
+            # Insert media
+            for item in files:
+                file_path = os.path.join(root, item)
+                title = Path(item).stem
                 try:
                     db_connection.execute(
                         "INSERT INTO media(title, file_path) VALUES (?, ?)",
                         (title, file_path)
                     )
+                    logger.info(f"Added {item}")
                 except sqlite3.IntegrityError as err:
                     if err.sqlite_errorname == "SQLITE_CONSTRAINT_UNIQUE":
                         pass
-                        # TODO: print files being inserted and not already in db
-                        # logger.info(f"Filepath '{file_path}' already in database")
                     else:
                         raise
+        # Remove excluded folders from library
+        for folder in CONFIG.get("exclude-folders"):
+            excluded_path = os.path.normpath(os.path.join(media_location, folder)) + "%"
+            removed_items = db_connection.execute(
+                "DELETE FROM media WHERE file_path LIKE ?",
+                (excluded_path,)
+            )
+            db_connection.commit()
+            if removed_items.rowcount > 0:
+                logger.info(f"Removed {removed_items.rowcount} library items with excluded path {folder}")
     except:
         raise
     finally:

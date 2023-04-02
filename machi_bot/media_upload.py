@@ -63,7 +63,7 @@ class MediaTweet:
         """Uploads media in chunks and appends to chunks uploaded"""
         segment_id = 0
         bytes_sent = 0
-        progress = 0
+        # progress = 0
         with open(self.video_filename, "rb") as file:
             while bytes_sent < self.total_bytes:
                 # Chunk must be < 5MB
@@ -96,11 +96,11 @@ class MediaTweet:
                 bytes_sent = file.tell()
 
                 # Print progress
-                progress = round((bytes_sent / self.total_bytes) * 100, 2)
-                sys.stdout.write(f"\rUploading {progress}..")
-                sys.stdout.flush()
+                # progress = round((bytes_sent / self.total_bytes) * 100, 2)
+                # sys.stdout.write(f"\rUploading {progress}..")
+                # sys.stdout.flush()
 
-        sys.stdout.write("\n")
+        # sys.stdout.write("\n")
         logger.success("Upload chunks complete!")
 
 
@@ -140,12 +140,12 @@ class MediaTweet:
             logger.info(f"Processing info: {self.processing_info}")
             raise Exception("Media processing failed")
 
-        try:
-            check_after_secs = self.processing_info["check_after_secs"]
-        except KeyError:
-            logger.warning("Error reading upload state")
-            logger.warning(self.processing_info)
-            check_after_secs = 5
+        if "error" in self.processing_info:
+            logger.error("Error uploading media")
+            logger.info(f"Processing info: {self.processing_info}")
+            raise Exception("Upload error")
+
+        check_after_secs = self.processing_info["check_after_secs"]
 
         logger.info(f"Checking after {str(check_after_secs)} seconds")
         time.sleep(check_after_secs + 1)
