@@ -140,12 +140,12 @@ class MediaTweet:
             logger.info(f"Processing info: {self.processing_info}")
             raise Exception("Media processing failed")
 
-        try:
-            check_after_secs = self.processing_info["check_after_secs"]
-        except KeyError:
-            logger.warning("Error reading upload state")
-            logger.warning(self.processing_info)
-            check_after_secs = 5
+        if "error" in self.processing_info:
+            logger.error("Error uploading media")
+            logger.info(f"Processing info: {self.processing_info}")
+            raise Exception("Upload error")
+
+        check_after_secs = self.processing_info["check_after_secs"]
 
         logger.info(f"Checking after {str(check_after_secs)} seconds")
         time.sleep(check_after_secs + 1)
